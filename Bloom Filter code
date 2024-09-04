@@ -1,0 +1,89 @@
+import mmh3
+    from bitarray import bitarray
+    
+    #Συνάρτηση που δημιουργούμε το Bloom filter:
+    def create_bloom_filter_fun(size, numofhashes):
+        bloom_filter = BloomFilter(size, numofhashes)
+        return bloom_filter
+     #Η συνάρτηση επιστρέφει το bloom filter που δημιουργεί με τιμές που 
+     #ορίζονται παρακάτω
+    
+    #Συνάρτηση που προσθέτει τις ψηφιακές υπογραφές στη βάση
+    #Παράμετροι: το bloom filter που φτιάξαμε προηγουμένως και την ψηφιακή 
+    #            υπογραφή απο μία συμπεριφορά
+    def add_the_signatures_to_base_fun(bloom_filter, signatures):
+        for signature in signatures:
+            bloom_filter.add(signature)
+    
+    #Συνάρτηση που θα κάνει τον έλεγχο αν η υποψήφια υπογραφή βρίσκεται 
+    #στη βάση του bloom filter ή όχι
+    def check_possible_signature(bloom_filter, signature):
+        if bloom_filter.contains(signature):
+            print("Η ψηφιακή υπογραφή που ψάχνεις υπάρχει 
+                   στη βάση του Bloom Filter")
+        else:
+            print("Η ψηφιακή υπογραφή που ψάχνεις ΔΕΝ υπάρχει 
+                   στη βάση του Bloom Filter")
+    
+    #Φτιάχνουμε την κλάση του bloom filter για να δημιουργηθεί στην συνάρτηση 
+    #create_bloom_filter_fun παραπάνω
+    class BloomFilter:
+    #Η μεταβλητη self είναι για να τονίζουμε ότι μια μεταβλητή είναι της κλάσης
+        def __init__(self, size_of_bits, numofhashes):
+    #size_of_bits: είναι η μεταβλητή που δηλώνει το μέγεθος του αριθμού 
+    #των bits που χρησιμοποιεί το bloom filter μας
+            self.size_of_bits=size_of_bits
+    #numofhashes: είναι ο αριθμός των φορών που θα κατακερματίσει ο αλγόριθμος  
+    #μία συμπεριφορά προκειμένου να φτάσει να κάνει τον έλεγχο στο bloom filter
+            self.numofhashes=numofhashes
+    #Δημιουργούμε έναν πίνακα απο bits στο μέγετος που ορίζουμε στο size
+            self.bit_array=bitarray(size_of_bits)
+    #Το σύνολο των bits στην σειμβολοσειρά (με μέγεθος τον αριθμό size 
+    #που ορίζουμε) αρχικοποιείται με μηδενικά σε όλες τις θέσεις
+            self.bit_array.setall(0)
+    
+    #Φτιάχνουμε μία συνάρτηση που θα προσθέτει τα καινούργια στοιχεία μέσα στο 
+    #Bloom filter στην περίπτωση που είναι μία καλόβουλη ψηφιακή υπογραφή
+        def add(self, new_signature):
+    #Για κάθε μία συνάρτηση κατακερματισμού (να κατακερματιτεί 
+    #όσες φορές ορίσουμε εμείς)
+            for i in range(self.numofhashes):
+    #υπολογίζουμε το τελικό αποτέλεσμα της ψηφιακής υπογραφής απο το υπόλοιπο 
+    #του hash που προκείπτει με το μέγεθος του bloom filter, το οποίο καθορίζει 
+    #και την τιμή στον πίνακα των bit_array όπου θα αλλάξει η αρχικοποιημένη 
+    #τιμή 0 σε 1
+                new_signature_hash = mmh3.hash(new_signature, 
+                i) % self.size_of_bits
+    #Αλλάζουμε το 0 σε 1 του πίνακα των bit, στην θέση που υπολογίστηκε  
+    #παραπάνω για την νέα υπογραφή
+                self.bit_array[new_signature_hash] = 1
+    
+        def contains(self, item):
+    #Για κάθε μία hash function ξεχωριστα
+            for i in range(self.numofhashes):
+    #για να υπολογίσουμε τον δεικτη στη συγκεκριμένη θέση του στοιχείου
+                index = mmh3.hash(item, i) % self.size_of_bits
+                if not self.bit_array[index]:
+                    return False
+            return True
+    
+    def main():
+    #Δημιουργούμε το δικό μας bloom filter με συγκεκριμένες μεταβλητές
+    
+        size = 70000
+        numofhashes = 5
+        bloom_filter = create_bloom_filter_fun(size, numofhashes)
+    #Έστω ότι το bloom filter που έχουμε έχει ήδη μεσα του κάποιες ψηφιακές 
+    #υπογραφές μολυσμένες (malicious_signatures)
+    
+        mal_signatures = ["mal_sig1", "mal_sig2", "mal_sig3", 
+                          "mal_sig4", "mal_sig5"]
+        add_the_signatures_to_base_fun(bloom_filter, mal_signatures)
+    
+    #ελέγχουμε αν η υπογραφή βρίσκεται μέσα στην συλλογή των κακόβουλων
+        pos_signature = "mal_sig1"
+        check_possible_signature(bloom_filter, pos_signature)
+    
+    if __name__ == "__main__":
+        main()
+
